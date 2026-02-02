@@ -1,0 +1,93 @@
+REAL ESTATE MANAGEMENT SYSTEM - SETUP INSTRUCTIONS
+====================================================
+
+1. CREATE DATABASE
+------------------
+- Open phpMyAdmin or MySQL command line
+- Run the database.sql file to create the database and tables
+- The default database name is 'real_estate_db'
+
+2. CONFIGURE THE SYSTEM
+-----------------------
+- Edit includes/config.php
+- Update database credentials if needed:
+  * DB_HOST (default: localhost)
+  * DB_USER (default: root)
+  * DB_PASS (default: empty)
+  * DB_NAME (default: real_estate_db)
+  
+3. CREATE UPLOADS DIRECTORY
+---------------------------
+- The system will auto-create uploads/properties/ folder
+- Make sure the web server has write permissions
+- On Ubuntu: sudo chmod -R 755 uploads/
+
+4. DEFAULT ADMIN CREDENTIALS
+-----------------------------
+Username: admin@example.com
+Password: admin123
+
+IMPORTANT: Change this password immediately after first login!
+
+5. ACCESS THE SYSTEM
+--------------------
+- Home Page: http://localhost:8080/index.php
+- Admin Login: http://localhost:8080/admin-login.php
+- Owner/Buyer Login: http://localhost:8080/login.php
+
+6. FEATURES
+-----------
+✓ Property listing and management
+✓ Owner dashboard with property management
+✓ Buyer dashboard with booking system
+✓ Admin panel for system oversight
+✓ Property viewing appointments
+✓ Image upload for properties
+✓ Responsive design
+
+7. FILE STRUCTURE
+-----------------
+/
+├── index.php                 (Homepage)
+├── properties.php            (Property listings)
+├── property-details.php      (Single property view)
+├── login.php                 (Owner/Buyer login)
+├── register.php              (Registration)
+├── owner-dashboard.php       (Owner dashboard)
+├── buyer-dashboard.php       (Buyer dashboard)
+├── admin-login.php           (Admin login)
+├── admin-dashboard.php       (Admin panel)
+├── add-property.php          (Add new property)
+├── edit-property.php         (Edit property)
+├── book-viewing.php          (Book property viewing)
+├── includes/
+│   ├── config.php           (Configuration)
+│   └── functions.php        (Helper functions)
+├── assets/
+│   ├── css/style.css        (Styles)
+│   └── js/main.js           (JavaScript)
+└── uploads/
+    └── properties/          (Property images)
+
+8. TROUBLESHOOTING
+------------------
+- If images don't upload: Check folder permissions
+- If database errors occur: Verify config.php settings
+- For session issues: Check PHP session configuration
+
+9. SYSTEM REQUIREMENTS
+----------------------
+- PHP 7.4 or higher
+- MySQL 5.7 or higher
+- Apache/Nginx web server
+- GD Library (for image handling)
+
+10. SECURITY NOTES
+------------------
+- Change default admin password
+- Use strong passwords
+- Keep PHP and MySQL updated
+- Set proper file permissions
+- Enable HTTPS in production
+
+For support or issues, refer to the documentation or contact the development team.
