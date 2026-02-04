@@ -1,6 +1,7 @@
 <?php
 require_once 'includes/config.php';
 
+// Check if owner is logged in
 if(!isset($_SESSION['owner_id'])) {
     header("Location: login.php");
     exit();
@@ -8,34 +9,29 @@ if(!isset($_SESSION['owner_id'])) {
 
 $owner_id = $_SESSION['owner_id'];
 
-// Fetch owner details
+// Get owner information
 $owner_query = "SELECT * FROM owners WHERE owner_id = $owner_id";
-$owner = $conn->query($owner_query)->fetch_assoc();
+$owner_result = $conn->query($owner_query);
+$owner = $owner_result->fetch_assoc();
 
-// Update house count
-$update_count = "UPDATE owners SET no_of_houses = (SELECT COUNT(*) FROM properties WHERE owner_id = $owner_id) WHERE owner_id = $owner_id";
-$conn->query($update_count);
-
-// Fetch properties
-$properties_query = "SELECT * FROM properties WHERE owner_id = $owner_id ORDER BY created_at DESC";
+// Get owner's properties count
+$properties_query = "SELECT COUNT(*) as total_properties FROM properties WHERE owner_id = $owner_id";
 $properties_result = $conn->query($properties_query);
+$properties_count = $properties_result->fetch_assoc()['total_properties'];
 
-// Fetch bookings for owner's properties
-$bookings_query = "SELECT b.*, p.property_name, p.location, p.city, buy.fname, buy.lname, buy.email, buy.mobile_no
+// Get owner's properties
+$properties_list_query = "SELECT * FROM properties WHERE owner_id = $owner_id ORDER BY created_at DESC";
+$properties_list = $conn->query($properties_list_query);
+
+// Get recent bookings for owner's properties
+$bookings_query = "SELECT b.*, p.property_name, p.location, bu.fname, bu.lname, bu.email as buyer_email, bu.phone_no as buyer_phone
                    FROM bookings b
                    JOIN properties p ON b.property_id = p.property_id
-                   JOIN buyers buy ON b.buyer_id = buy.buyer_id
+                   JOIN buyers bu ON b.buyer_id = bu.buyer_id
                    WHERE p.owner_id = $owner_id
-                   ORDER BY b.created_at DESC";
-$bookings_result = $conn->query($bookings_query);
-
-// Statistics
-$stats_query = "SELECT 
-                (SELECT COUNT(*) FROM properties WHERE owner_id = $owner_id) as total_properties,
-                (SELECT COUNT(*) FROM properties WHERE owner_id = $owner_id AND status = 'Available') as available_properties,
-                (SELECT COUNT(*) FROM properties WHERE owner_id = $owner_id AND status = 'Sold') as sold_properties,
-                (SELECT COUNT(*) FROM bookings b JOIN properties p ON b.property_id = p.property_id WHERE p.owner_id = $owner_id AND b.status = 'Pending') as pending_bookings";
-$stats = $conn->query($stats_query)->fetch_assoc();
+                   ORDER BY b.created_at DESC
+                   LIMIT 10";
+$bookings = $conn->query($bookings_query);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -44,118 +40,17 @@ $stats = $conn->query($stats_query)->fetch_assoc();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Owner Dashboard - <?php echo SITE_NAME; ?></title>
     <link rel="stylesheet" href="assets/css/style.css">
-    <style>
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: 250px 1fr;
-            gap: 2rem;
-            margin-top: 2rem;
-        }
-        .sidebar {
-            background: white;
-            padding: 2rem;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            height: fit-content;
-            position: sticky;
-            top: 100px;
-        }
-        .sidebar-menu {
-            list-style: none;
-        }
-        .sidebar-menu li {
-            margin-bottom: 1rem;
-        }
-        .sidebar-menu a {
-            display: block;
-            padding: 0.8rem 1rem;
-            color: #2C3E50;
-            border-radius: 8px;
-            transition: all 0.3s;
-        }
-        .sidebar-menu a:hover,
-        .sidebar-menu a.active {
-            background: linear-gradient(135deg, #E74C3C 0%, #C0392B 100%);
-            color: white;
-        }
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-        .stat-card {
-            background: white;
-            padding: 2rem;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            text-align: center;
-        }
-        .stat-number {
-            font-size: 2.5rem;
-            font-weight: bold;
-            margin-bottom: 0.5rem;
-        }
-        .property-table {
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            overflow: hidden;
-        }
-        .property-table table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        .property-table th {
-            background: #2C3E50;
-            color: white;
-            padding: 1rem;
-            text-align: left;
-            font-weight: 600;
-        }
-        .property-table td {
-            padding: 1rem;
-            border-bottom: 1px solid #E0E0E0;
-        }
-        .property-table tr:hover {
-            background: #f8f9fa;
-        }
-        .action-btn {
-            padding: 0.4rem 0.8rem;
-            border-radius: 4px;
-            font-size: 0.9rem;
-            margin-right: 0.5rem;
-            display: inline-block;
-        }
-        .booking-card {
-            background: white;
-            padding: 1.5rem;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            margin-bottom: 1.5rem;
-        }
-        .status-badge {
-            display: inline-block;
-            padding: 0.4rem 1rem;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: bold;
-        }
-        .status-pending { background: #FFF3CD; color: #856404; }
-        .status-confirmed { background: #D4EDDA; color: #155724; }
-        .status-completed { background: #D1ECF1; color: #0C5460; }
-        .status-cancelled { background: #F8D7DA; color: #721C24; }
-        @media (max-width: 768px) {
-            .dashboard-grid {
-                grid-template-columns: 1fr;
-            }
-            .property-table {
-                overflow-x: auto;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="assets/css/animations.css">
 </head>
 <body>
+    <!-- Floating Background -->
+    <div class="floating-bg">
+        <div class="floating-icon">🏠</div>
+        <div class="floating-icon">📊</div>
+        <div class="floating-icon">💼</div>
+        <div class="floating-icon">📈</div>
+    </div>
+
     <nav class="navbar">
         <div class="nav-container">
             <a href="index.php" class="logo">
@@ -165,261 +60,235 @@ $stats = $conn->query($stats_query)->fetch_assoc();
             <ul class="nav-menu">
                 <li><a href="index.php">Home</a></li>
                 <li><a href="properties.php">Properties</a></li>
-                <li><a href="owner-dashboard.php">Dashboard</a></li>
+                <li><a href="about.php">About</a></li>
+                <li><a href="contact.php">Contact</a></li>
+                <li><a href="owner-dashboard.php" class="active">Dashboard</a></li>
                 <li><a href="logout.php">Logout</a></li>
             </ul>
         </div>
     </nav>
 
-    <div class="container">
-        <h1 style="color: #2C3E50; margin-bottom: 0.5rem;">Welcome, <?php echo htmlspecialchars($owner['name']); ?>! 👋</h1>
-        <p style="color: #7F8C8D; margin-bottom: 2rem;">Manage your properties and bookings</p>
+    <div class="container" style="padding: 2rem 0;">
+        <div style="margin-bottom: 2rem; animation: fadeInDown 0.6s ease-out;">
+            <h1 style="color: #2C3E50; margin-bottom: 0.5rem;">Welcome, <?php echo htmlspecialchars($owner['name']); ?>! 👋</h1>
+            <p style="color: #7F8C8D;">Manage your properties and bookings</p>
+        </div>
 
-        <div class="dashboard-grid">
-            <!-- Sidebar -->
-            <div class="sidebar">
-                <div style="text-align: center; margin-bottom: 2rem;">
-                    <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #E74C3C, #C0392B); border-radius: 50%; margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; color: white; font-size: 2rem;">
-                        <?php echo strtoupper(substr($owner['name'], 0, 1)); ?>
-                    </div>
-                    <h3 style="color: #2C3E50; margin-bottom: 0.3rem;"><?php echo htmlspecialchars($owner['name']); ?></h3>
-                    <p style="color: #7F8C8D; font-size: 0.9rem;">Property Owner</p>
-                </div>
-                
-                <ul class="sidebar-menu">
-                    <li><a href="#overview" class="active" onclick="showSection('overview')">📊 Overview</a></li>
-                    <li><a href="#properties" onclick="showSection('properties')">🏘️ My Properties</a></li>
-                    <li><a href="#bookings" onclick="showSection('bookings')">📅 Bookings</a></li>
-                    <li><a href="#profile" onclick="showSection('profile')">👤 Profile</a></li>
-                    <li><a href="add-property.php" style="background: #27AE60; color: white;">➕ Add Property</a></li>
-                    <li><a href="logout.php" style="color: #E74C3C;">🚪 Logout</a></li>
-                </ul>
+        <!-- Dashboard Stats -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 3rem;">
+            <div class="stat-card" style="background: linear-gradient(135deg, #3498DB 0%, #2980B9 100%); padding: 2rem; border-radius: 12px; color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <div class="stat-icon" style="font-size: 3rem; margin-bottom: 0.5rem;">🏠</div>
+                <div class="stat-number" style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem;"><?php echo $properties_count; ?></div>
+                <div style="opacity: 0.9;">Total Properties</div>
             </div>
 
-            <!-- Main Content -->
-            <div>
-                <!-- Overview Section -->
-                <div id="overview-section">
-                    <h2 style="color: #2C3E50; margin-bottom: 1.5rem;">Dashboard Overview</h2>
-                    
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <div class="stat-number" style="color: #3498DB;"><?php echo $stats['total_properties']; ?></div>
-                            <p style="color: #7F8C8D; font-weight: 600;">Total Properties</p>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-number" style="color: #27AE60;"><?php echo $stats['available_properties']; ?></div>
-                            <p style="color: #7F8C8D; font-weight: 600;">Available</p>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-number" style="color: #E74C3C;"><?php echo $stats['sold_properties']; ?></div>
-                            <p style="color: #7F8C8D; font-weight: 600;">Sold</p>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-number" style="color: #F39C12;"><?php echo $stats['pending_bookings']; ?></div>
-                            <p style="color: #7F8C8D; font-weight: 600;">Pending Bookings</p>
-                        </div>
-                    </div>
+            <div class="stat-card" style="background: linear-gradient(135deg, #E74C3C 0%, #C0392B 100%); padding: 2rem; border-radius: 12px; color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <div class="stat-icon" style="font-size: 3rem; margin-bottom: 0.5rem;">📅</div>
+                <div class="stat-number" style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem;"><?php echo $bookings ? $bookings->num_rows : 0; ?></div>
+                <div style="opacity: 0.9;">Total Bookings</div>
+            </div>
 
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
-                        <a href="add-property.php" style="background: linear-gradient(135deg, #27AE60 0%, #229954 100%); color: white; padding: 2rem; border-radius: 8px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-                            <div style="font-size: 3rem; margin-bottom: 0.5rem;">➕</div>
-                            <h3 style="margin: 0;">Add New Property</h3>
-                        </a>
-                        <a href="#properties" onclick="showSection('properties')" style="background: linear-gradient(135deg, #3498DB 0%, #2980B9 100%); color: white; padding: 2rem; border-radius: 8px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-                            <div style="font-size: 3rem; margin-bottom: 0.5rem;">🏘️</div>
-                            <h3 style="margin: 0;">View All Properties</h3>
-                        </a>
-                    </div>
-
-                    <h3 style="color: #2C3E50; margin-bottom: 1rem;">Recent Bookings</h3>
-                    <?php 
-                    $recent_bookings = $conn->query("SELECT b.*, p.property_name, buy.fname, buy.lname 
-                                                      FROM bookings b
-                                                      JOIN properties p ON b.property_id = p.property_id
-                                                      JOIN buyers buy ON b.buyer_id = buy.buyer_id
-                                                      WHERE p.owner_id = $owner_id
-                                                      ORDER BY b.created_at DESC LIMIT 5");
-                    if($recent_bookings->num_rows > 0):
-                        while($booking = $recent_bookings->fetch_assoc()):
+            <div class="stat-card" style="background: linear-gradient(135deg, #27AE60 0%, #229954 100%); padding: 2rem; border-radius: 12px; color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <div class="stat-icon" style="font-size: 3rem; margin-bottom: 0.5rem;">✅</div>
+                <div class="stat-number" style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem;">
+                    <?php
+                    $available_query = "SELECT COUNT(*) as count FROM properties WHERE owner_id = $owner_id AND status = 'Available'";
+                    $available_result = $conn->query($available_query);
+                    echo $available_result->fetch_assoc()['count'];
                     ?>
-                        <div class="booking-card">
-                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
-                                <h4 style="color: #2C3E50; margin: 0;"><?php echo htmlspecialchars($booking['property_name']); ?></h4>
-                                <span class="status-badge status-<?php echo strtolower($booking['status']); ?>">
-                                    <?php echo $booking['status']; ?>
-                                </span>
-                            </div>
-                            <p style="color: #7F8C8D; margin: 0.3rem 0;">👤 Buyer: <?php echo htmlspecialchars($booking['fname'] . ' ' . $booking['lname']); ?></p>
-                            <p style="color: #7F8C8D; margin: 0.3rem 0;">📅 Viewing: <?php echo date('M d, Y', strtotime($booking['viewing_date'])); ?> at <?php echo date('g:i A', strtotime($booking['viewing_time'])); ?></p>
-                        </div>
-                    <?php 
-                        endwhile;
-                    else:
-                    ?>
-                        <p style="text-align: center; padding: 2rem; color: #7F8C8D; background: white; border-radius: 8px;">No bookings yet</p>
-                    <?php endif; ?>
                 </div>
+                <div style="opacity: 0.9;">Available Properties</div>
+            </div>
+        </div>
 
-                <!-- Properties Section -->
-                <div id="properties-section" style="display: none;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                        <h2 style="color: #2C3E50; margin: 0;">My Properties</h2>
-                        <a href="add-property.php" class="btn btn-primary">➕ Add Property</a>
-                    </div>
-                    
-                    <?php if($properties_result->num_rows > 0): ?>
-                        <div class="property-table">
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Property</th>
-                                        <th>Location</th>
-                                        <th>Price</th>
-                                        <th>Type</th>
-                                        <th>Status</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php while($property = $properties_result->fetch_assoc()): ?>
-                                        <tr>
-                                            <td>
-                                                <strong style="color: #2C3E50;"><?php echo htmlspecialchars($property['property_name']); ?></strong>
-                                            </td>
-                                            <td style="color: #7F8C8D;"><?php echo htmlspecialchars($property['city']); ?></td>
-                                            <td style="color: #E74C3C; font-weight: bold;">KES <?php echo number_format($property['price'], 2); ?></td>
-                                            <td style="color: #7F8C8D;"><?php echo $property['property_type']; ?></td>
-                                            <td>
-                                                <span class="property-status status-<?php echo strtolower($property['status']); ?>">
-                                                    <?php echo $property['status']; ?>
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <a href="property-details.php?id=<?php echo $property['property_id']; ?>" class="action-btn btn-primary" title="View">👁️</a>
-                                                <a href="edit-property.php?id=<?php echo $property['property_id']; ?>" class="action-btn btn-secondary" title="Edit">✏️</a>
-                                                <a href="delete-property.php?id=<?php echo $property['property_id']; ?>" class="action-btn btn-danger" title="Delete" onclick="return confirm('Are you sure?')">🗑️</a>
-                                            </td>
-                                        </tr>
-                                    <?php endwhile; ?>
-                                </tbody>
-                            </table>
-                        </div>
-                    <?php else: ?>
-                        <div style="text-align: center; padding: 4rem 2rem; background: white; border-radius: 8px;">
-                            <div style="font-size: 4rem; margin-bottom: 1rem;">🏘️</div>
-                            <h3 style="color: #7F8C8D; margin-bottom: 1rem;">No Properties Yet</h3>
-                            <p style="color: #95A5A6; margin-bottom: 2rem;">Start by adding your first property!</p>
-                            <a href="add-property.php" class="btn btn-primary" style="display: inline-block; padding: 1rem 2rem;">➕ Add Property</a>
-                        </div>
-                    <?php endif; ?>
-                </div>
+        <!-- Quick Actions -->
+        <div class="scroll-reveal" style="background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 2rem;">
+            <h2 style="color: #2C3E50; margin-bottom: 1.5rem;">⚡ Quick Actions</h2>
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                <a href="add-property.php" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 0.5rem;" data-tooltip="Add a new property listing">
+                    <span style="font-size: 1.2rem;">➕</span> Add New Property
+                </a>
+                <a href="my-properties.php" class="btn" style="display: inline-flex; align-items: center; gap: 0.5rem; background: #34495E; color: white;" data-tooltip="View all your properties">
+                    <span style="font-size: 1.2rem;">📋</span> View My Properties
+                </a>
+                <a href="my-bookings.php" class="btn" style="display: inline-flex; align-items: center; gap: 0.5rem; background: #16A085; color: white;" data-tooltip="Manage property viewings">
+                    <span style="font-size: 1.2rem;">📅</span> View Bookings
+                </a>
+            </div>
+        </div>
 
-                <!-- Bookings Section -->
-                <div id="bookings-section" style="display: none;">
-                    <h2 style="color: #2C3E50; margin-bottom: 1.5rem;">Property Viewing Bookings</h2>
-                    
-                    <?php if($bookings_result->num_rows > 0): ?>
-                        <?php while($booking = $bookings_result->fetch_assoc()): ?>
-                            <div class="booking-card">
-                                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
-                                    <div>
-                                        <h3 style="color: #2C3E50; margin-bottom: 0.3rem;"><?php echo htmlspecialchars($booking['property_name']); ?></h3>
-                                        <p style="color: #7F8C8D; margin: 0;">📍 <?php echo htmlspecialchars($booking['location'] . ', ' . $booking['city']); ?></p>
+        <!-- Recent Properties -->
+        <div class="scroll-reveal" style="background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 2rem;">
+            <h2 style="color: #2C3E50; margin-bottom: 1.5rem;">🏘️ My Properties</h2>
+            
+            <?php if($properties_list && $properties_list->num_rows > 0): ?>
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="background: #f8f9fa; border-bottom: 2px solid #E74C3C;">
+                                <th style="padding: 1rem; text-align: left; color: #2C3E50; width: 25%;">Property</th>
+                                <th style="padding: 1rem; text-align: left; color: #2C3E50; width: 12%;">Type</th>
+                                <th style="padding: 1rem; text-align: left; color: #2C3E50; width: 20%;">Location</th>
+                                <th style="padding: 1rem; text-align: left; color: #2C3E50; width: 15%;">Price</th>
+                                <th style="padding: 1rem; text-align: left; color: #2C3E50; width: 10%;">Status</th>
+                                <th style="padding: 1rem; text-align: left; color: #2C3E50; width: 18%;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php while($property = $properties_list->fetch_assoc()): ?>
+                            <tr style="border-bottom: 1px solid #E0E0E0;">
+                                <td style="padding: 1rem;"><?php echo htmlspecialchars($property['property_name']); ?></td>
+                                <td style="padding: 1rem;"><?php echo htmlspecialchars($property['property_type']); ?></td>
+                                <td style="padding: 1rem;"><?php echo htmlspecialchars($property['location']); ?>, <?php echo htmlspecialchars($property['city']); ?></td>
+                                <td style="padding: 1rem;">KES <?php echo number_format($property['price'], 2); ?></td>
+                                <td style="padding: 1rem;">
+                                    <span class="property-status status-<?php echo strtolower($property['status']); ?>">
+                                        <?php echo $property['status']; ?>
+                                    </span>
+                                </td>
+                                <td style="padding: 1rem;">
+                                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                                        <a href="edit-property.php?id=<?php echo $property['property_id']; ?>" style="color: #3498DB; text-decoration: none;" data-tooltip="Edit this property">Edit</a>
+                                        <a href="property-details.php?id=<?php echo $property['property_id']; ?>" style="color: #27AE60; text-decoration: none;" data-tooltip="View property details">View</a>
                                     </div>
-                                    <span class="status-badge status-<?php echo strtolower($booking['status']); ?>">
+                                </td>
+                            </tr>
+                            <?php endwhile; ?>
+                        </tbody>
+                    </table>
+                </div>
+            <?php else: ?>
+                <div style="text-align: center; padding: 3rem; color: #7F8C8D;">
+                    <div style="font-size: 4rem; margin-bottom: 1rem; animation: bounce 2s ease-in-out infinite;">🏠</div>
+                    <p style="font-size: 1.2rem; margin-bottom: 1rem;">No properties yet</p>
+                    <a href="add-property.php" class="btn btn-primary">Add Your First Property</a>
+                </div>
+            <?php endif; ?>
+        </div>
+
+        <!-- Recent Bookings -->
+        <div class="scroll-reveal" style="background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <h2 style="color: #2C3E50; margin-bottom: 1.5rem;">📅 Recent Bookings</h2>
+            
+            <?php if($bookings && $bookings->num_rows > 0): ?>
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="background: #f8f9fa; border-bottom: 2px solid #E74C3C;">
+                                <th style="padding: 1rem; text-align: left; color: #2C3E50; width: 25%;">Property</th>
+                                <th style="padding: 1rem; text-align: left; color: #2C3E50; width: 20%;">Buyer</th>
+                                <th style="padding: 1rem; text-align: left; color: #2C3E50; width: 25%;">Date & Time</th>
+                                <th style="padding: 1rem; text-align: left; color: #2C3E50; width: 15%;">Status</th>
+                                <th style="padding: 1rem; text-align: left; color: #2C3E50; width: 15%;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php while($booking = $bookings->fetch_assoc()): ?>
+                            <tr style="border-bottom: 1px solid #E0E0E0;">
+                                <td style="padding: 1rem;"><?php echo htmlspecialchars($booking['property_name']); ?></td>
+                                <td style="padding: 1rem;"><?php echo htmlspecialchars($booking['fname'] . ' ' . $booking['lname']); ?></td>
+                                <td style="padding: 1rem;"><?php echo date('M d, Y', strtotime($booking['viewing_date'])); ?> at <?php echo date('h:i A', strtotime($booking['viewing_time'])); ?></td>
+                                <td style="padding: 1rem;">
+                                    <span class="booking-status status-<?php echo strtolower($booking['status']); ?>">
                                         <?php echo $booking['status']; ?>
                                     </span>
-                                </div>
-                                
-                                <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
-                                    <p style="color: #2C3E50; font-weight: bold; margin-bottom: 0.5rem;">Buyer Information:</p>
-                                    <p style="color: #7F8C8D; margin: 0.3rem 0;">👤 Name: <?php echo htmlspecialchars($booking['fname'] . ' ' . $booking['lname']); ?></p>
-                                    <p style="color: #7F8C8D; margin: 0.3rem 0;">📧 Email: <?php echo htmlspecialchars($booking['email']); ?></p>
-                                    <p style="color: #7F8C8D; margin: 0.3rem 0;">📱 Phone: <?php echo htmlspecialchars($booking['mobile_no']); ?></p>
-                                </div>
-                                
-                                <p style="color: #7F8C8D; margin: 0.5rem 0;">📅 <strong>Viewing Date:</strong> <?php echo date('M d, Y', strtotime($booking['viewing_date'])); ?> at <?php echo date('g:i A', strtotime($booking['viewing_time'])); ?></p>
-                                <?php if($booking['message']): ?>
-                                    <p style="color: #7F8C8D; margin: 0.5rem 0;">💬 <strong>Message:</strong> <?php echo htmlspecialchars($booking['message']); ?></p>
-                                <?php endif; ?>
-                                <p style="color: #95A5A6; font-size: 0.9rem; margin-top: 0.5rem;">Booked on: <?php echo date('M d, Y', strtotime($booking['created_at'])); ?></p>
-                                
-                                <?php if($booking['status'] == 'Pending'): ?>
-                                    <div style="margin-top: 1rem; display: flex; gap: 1rem;">
-                                        <a href="confirm-booking.php?id=<?php echo $booking['booking_id']; ?>" class="btn btn-primary" style="padding: 0.5rem 1rem;">✓ Confirm</a>
-                                        <a href="cancel-booking.php?id=<?php echo $booking['booking_id']; ?>" class="btn btn-danger" style="padding: 0.5rem 1rem;" onclick="return confirm('Are you sure?')">✗ Cancel</a>
-                                    </div>
-                                <?php endif; ?>
-                            </div>
-                        <?php endwhile; ?>
-                    <?php else: ?>
-                        <div style="text-align: center; padding: 4rem 2rem; background: white; border-radius: 8px;">
-                            <div style="font-size: 4rem; margin-bottom: 1rem;">📅</div>
-                            <h3 style="color: #7F8C8D; margin-bottom: 1rem;">No Bookings Yet</h3>
-                            <p style="color: #95A5A6;">Bookings will appear here when buyers schedule viewings</p>
-                        </div>
-                    <?php endif; ?>
+                                </td>
+                                <td style="padding: 1rem;">
+                                    <a href="booking-details.php?id=<?php echo $booking['booking_id']; ?>" style="color: #3498DB; text-decoration: none;" data-tooltip="View booking details">View Details</a>
+                                </td>
+                            </tr>
+                            <?php endwhile; ?>
+                        </tbody>
+                    </table>
                 </div>
-
-                <!-- Profile Section -->
-                <div id="profile-section" style="display: none;">
-                    <h2 style="color: #2C3E50; margin-bottom: 1.5rem;">My Profile</h2>
-                    
-                    <div style="background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
-                            <div>
-                                <label style="font-weight: bold; color: #2C3E50; display: block; margin-bottom: 0.5rem;">Full Name:</label>
-                                <p style="color: #7F8C8D;"><?php echo htmlspecialchars($owner['name']); ?></p>
-                            </div>
-                            <div>
-                                <label style="font-weight: bold; color: #2C3E50; display: block; margin-bottom: 0.5rem;">Email:</label>
-                                <p style="color: #7F8C8D;"><?php echo htmlspecialchars($owner['email']); ?></p>
-                            </div>
-                            <div>
-                                <label style="font-weight: bold; color: #2C3E50; display: block; margin-bottom: 0.5rem;">Mobile:</label>
-                                <p style="color: #7F8C8D;"><?php echo htmlspecialchars($owner['mobile_no']); ?></p>
-                            </div>
-                            <div>
-                                <label style="font-weight: bold; color: #2C3E50; display: block; margin-bottom: 0.5rem;">Total Properties:</label>
-                                <p style="color: #7F8C8D;"><?php echo $owner['no_of_houses']; ?></p>
-                            </div>
-                            <div>
-                                <label style="font-weight: bold; color: #2C3E50; display: block; margin-bottom: 0.5rem;">Member Since:</label>
-                                <p style="color: #7F8C8D;"><?php echo date('M d, Y', strtotime($owner['created_at'])); ?></p>
-                            </div>
-                        </div>
-                        
-                        <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #E0E0E0;">
-                            <a href="edit-owner-profile.php" class="btn btn-primary" style="display: inline-block; padding: 0.8rem 2rem;">Edit Profile</a>
-                        </div>
-                    </div>
+            <?php else: ?>
+                <div style="text-align: center; padding: 3rem; color: #7F8C8D;">
+                    <div style="font-size: 4rem; margin-bottom: 1rem; animation: bounce 2s ease-in-out infinite;">📅</div>
+                    <p style="font-size: 1.2rem;">No bookings yet</p>
                 </div>
-            </div>
+            <?php endif; ?>
         </div>
     </div>
 
-    <footer class="footer" style="margin-top: 4rem;">
+    <!-- Animated Landlord Waving -->
+    <div class="cartoon-character">
+        <svg viewBox="0 0 200 200" style="width: 100%; height: 100%;">
+            <!-- Landlord -->
+            <g>
+                <!-- Head -->
+                <circle cx="100" cy="60" r="25" fill="#F4A460"/>
+                <!-- Eyes -->
+                <circle cx="92" cy="55" r="3" fill="#2C3E50"/>
+                <circle cx="108" cy="55" r="3" fill="#2C3E50"/>
+                <!-- Smile -->
+                <path d="M 90 65 Q 100 70 110 65" stroke="#2C3E50" stroke-width="2" fill="none"/>
+                <!-- Body -->
+                <rect x="80" y="85" width="40" height="50" rx="5" fill="#3498DB"/>
+                <!-- Legs -->
+                <rect x="85" y="135" width="12" height="35" fill="#2C3E50"/>
+                <rect x="103" y="135" width="12" height="35" fill="#2C3E50"/>
+                <!-- Waving Arm (Right) -->
+                <g class="landlord-wave">
+                    <rect x="120" y="90" width="12" height="30" fill="#F4A460" transform-origin="126 90"/>
+                    <circle cx="126" cy="122" r="8" fill="#F4A460"/>
+                </g>
+                <!-- Other Arm (Left) -->
+                <rect x="68" y="90" width="12" height="30" fill="#F4A460"/>
+                <!-- Hat -->
+                <ellipse cx="100" cy="40" rx="30" ry="8" fill="#E74C3C"/>
+                <rect x="85" y="35" width="30" height="10" fill="#E74C3C"/>
+                <!-- Money symbols floating around -->
+                <text x="140" y="70" font-size="20" class="money-float" style="animation-delay: 0s;">💰</text>
+                <text x="50" y="90" font-size="20" class="money-float" style="animation-delay: 0.5s;">💵</text>
+                <text x="130" y="120" font-size="20" class="money-float" style="animation-delay: 1s;">💴</text>
+            </g>
+        </svg>
+    </div>
+
+    <footer class="footer">
         <div class="footer-bottom">
             <p>&copy; 2025 <?php echo SITE_NAME; ?>. All Rights Reserved.</p>
         </div>
     </footer>
 
-    <script src="assets/js/main.js"></script>
     <script>
-        function showSection(section) {
-            document.getElementById('overview-section').style.display = 'none';
-            document.getElementById('properties-section').style.display = 'none';
-            document.getElementById('bookings-section').style.display = 'none';
-            document.getElementById('profile-section').style.display = 'none';
-            
-            document.getElementById(section + '-section').style.display = 'block';
-            
-            document.querySelectorAll('.sidebar-menu a').forEach(link => {
-                link.classList.remove('active');
+        // Scroll reveal animation
+        function revealOnScroll() {
+            const reveals = document.querySelectorAll('.scroll-reveal');
+            reveals.forEach(element => {
+                const elementTop = element.getBoundingClientRect().top;
+                const elementVisible = 150;
+                if (elementTop < window.innerHeight - elementVisible) {
+                    element.classList.add('active');
+                }
             });
-            event.target.classList.add('active');
         }
+
+        window.addEventListener('scroll', revealOnScroll);
+        revealOnScroll(); // Initial check
+
+        // Counter animation for stats
+        function animateCounter(element) {
+            const target = parseInt(element.innerText);
+            const duration = 2000;
+            const step = target / (duration / 16);
+            let current = 0;
+            
+            const timer = setInterval(() => {
+                current += step;
+                if (current >= target) {
+                    element.innerText = target;
+                    clearInterval(timer);
+                } else {
+                    element.innerText = Math.floor(current);
+                }
+            }, 16);
+        }
+
+        // Animate all stat numbers on page load
+        window.addEventListener('load', () => {
+            document.querySelectorAll('.stat-number').forEach(animateCounter);
+        });
     </script>
 </body>
 </html>

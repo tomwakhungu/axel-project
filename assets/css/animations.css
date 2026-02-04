@@ -1,0 +1,644 @@
+/* ============================================
+   KEYFRAME ANIMATIONS
+   ============================================ */
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes scaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0px);
+    }
+    50% {
+        transform: translateY(-20px);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% {
+        transform: translateY(0);
+    }
+    40% {
+        transform: translateY(-20px);
+    }
+    60% {
+        transform: translateY(-10px);
+    }
+}
+
+@keyframes shake {
+    0%, 100% {
+        transform: translateX(0);
+    }
+    10%, 30%, 50%, 70%, 90% {
+        transform: translateX(-5px);
+    }
+    20%, 40%, 60%, 80% {
+        transform: translateX(5px);
+    }
+}
+
+@keyframes rotate {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes swing {
+    0%, 100% {
+        transform: rotate(0deg);
+    }
+    25% {
+        transform: rotate(15deg);
+    }
+    75% {
+        transform: rotate(-15deg);
+    }
+}
+
+@keyframes wave {
+    0%, 100% {
+        transform: rotate(0deg);
+    }
+    25% {
+        transform: rotate(20deg);
+    }
+    75% {
+        transform: rotate(-20deg);
+    }
+}
+
+@keyframes doorOpen {
+    0% {
+        transform: perspective(1000px) rotateY(0deg);
+        transform-origin: left;
+    }
+    50% {
+        transform: perspective(1000px) rotateY(-90deg);
+        transform-origin: left;
+    }
+    100% {
+        transform: perspective(1000px) rotateY(0deg);
+        transform-origin: left;
+    }
+}
+
+@keyframes jump {
+    0%, 100% {
+        transform: translateY(0) scale(1, 1);
+    }
+    50% {
+        transform: translateY(-50px) scale(1.2, 0.8);
+    }
+}
+
+@keyframes wiggle {
+    0%, 100% {
+        transform: rotate(0deg);
+    }
+    25% {
+        transform: rotate(-10deg);
+    }
+    75% {
+        transform: rotate(10deg);
+    }
+}
+
+/* ============================================
+   FLOATING BACKGROUND ELEMENTS
+   ============================================ */
+
+.floating-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    z-index: -1;
+    pointer-events: none;
+}
+
+.floating-icon {
+    position: absolute;
+    font-size: 3rem;
+    opacity: 0.08;
+    animation: float 6s ease-in-out infinite;
+}
+
+.floating-icon:nth-child(1) {
+    top: 10%;
+    left: 10%;
+    animation-delay: 0s;
+    animation-duration: 7s;
+}
+
+.floating-icon:nth-child(2) {
+    top: 20%;
+    right: 10%;
+    animation-delay: 1s;
+    animation-duration: 8s;
+}
+
+.floating-icon:nth-child(3) {
+    top: 60%;
+    left: 15%;
+    animation-delay: 2s;
+    animation-duration: 6s;
+}
+
+.floating-icon:nth-child(4) {
+    top: 70%;
+    right: 20%;
+    animation-delay: 3s;
+    animation-duration: 9s;
+}
+
+.floating-icon:nth-child(5) {
+    top: 40%;
+    left: 50%;
+    animation-delay: 1.5s;
+    animation-duration: 7.5s;
+}
+
+.floating-icon:nth-child(6) {
+    top: 80%;
+    left: 40%;
+    animation-delay: 2.5s;
+    animation-duration: 8.5s;
+}
+
+/* ============================================
+   AUTH CONTAINER ANIMATIONS
+   ============================================ */
+
+.auth-container {
+    animation: fadeInUp 0.8s ease-out;
+}
+
+.auth-box {
+    animation: scaleIn 0.6s ease-out 0.2s both;
+    transition: transform 0.3s ease;
+}
+
+.auth-box:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 25px 70px rgba(0,0,0,0.4) !important;
+}
+
+.auth-header h2 {
+    animation: fadeInDown 0.8s ease-out 0.4s both;
+}
+
+.auth-header p {
+    animation: fadeInDown 0.8s ease-out 0.5s both;
+}
+
+.form-group {
+    animation: fadeInUp 0.6s ease-out both;
+}
+
+.form-group:nth-child(1) { animation-delay: 0.6s; }
+.form-group:nth-child(2) { animation-delay: 0.7s; }
+.form-group:nth-child(3) { animation-delay: 0.8s; }
+.form-group:nth-child(4) { animation-delay: 0.9s; }
+.form-group:nth-child(5) { animation-delay: 1s; }
+
+/* Enhanced input focus effects */
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    border-color: #E74C3C;
+    box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1);
+    transform: translateY(-2px);
+}
+
+/* Button animations */
+.btn {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.btn:hover::before {
+    width: 300px;
+    height: 300px;
+}
+
+.btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(231, 76, 60, 0.4);
+}
+
+.btn:active {
+    transform: translateY(-1px);
+}
+
+/* ============================================
+   DASHBOARD ANIMATIONS
+   ============================================ */
+
+.stat-card {
+    animation: scaleIn 0.6s ease-out both;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s;
+}
+
+.stat-card:hover::before {
+    left: 100%;
+}
+
+.stat-card:nth-child(1) { animation-delay: 0.1s; }
+.stat-card:nth-child(2) { animation-delay: 0.2s; }
+.stat-card:nth-child(3) { animation-delay: 0.3s; }
+.stat-card:nth-child(4) { animation-delay: 0.4s; }
+.stat-card:nth-child(5) { animation-delay: 0.5s; }
+.stat-card:nth-child(6) { animation-delay: 0.6s; }
+
+.stat-card:hover {
+    transform: translateY(-10px) scale(1.05);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+}
+
+/* Number counter animation */
+.stat-number {
+    display: inline-block;
+}
+
+/* Icon animations */
+.stat-icon {
+    display: inline-block;
+    animation: bounce 2s ease-in-out infinite;
+}
+
+/* ============================================
+   PROPERTY CARD ANIMATIONS
+   ============================================ */
+
+.property-card {
+    animation: fadeInUp 0.6s ease-out both;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+    overflow: hidden;
+}
+
+.property-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(231, 76, 60, 0.1), rgba(192, 57, 43, 0.1));
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.property-card:hover::after {
+    opacity: 1;
+}
+
+.property-card:hover {
+    transform: translateY(-15px) scale(1.02);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+}
+
+.property-image {
+    overflow: hidden;
+    position: relative;
+}
+
+.property-image img {
+    transition: transform 0.5s ease;
+}
+
+.property-card:hover .property-image img {
+    transform: scale(1.1) rotate(2deg);
+}
+
+/* ============================================
+   NAVBAR ANIMATIONS
+   ============================================ */
+
+.navbar {
+    animation: fadeInDown 0.6s ease-out;
+}
+
+.nav-menu li {
+    animation: fadeInDown 0.6s ease-out both;
+}
+
+.nav-menu li:nth-child(1) { animation-delay: 0.1s; }
+.nav-menu li:nth-child(2) { animation-delay: 0.2s; }
+.nav-menu li:nth-child(3) { animation-delay: 0.3s; }
+.nav-menu li:nth-child(4) { animation-delay: 0.4s; }
+.nav-menu li:nth-child(5) { animation-delay: 0.5s; }
+.nav-menu li:nth-child(6) { animation-delay: 0.6s; }
+
+.nav-menu a {
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.nav-menu a::before {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: #E74C3C;
+    transition: width 0.3s ease;
+}
+
+.nav-menu a:hover::before,
+.nav-menu a.active::before {
+    width: 100%;
+}
+
+.nav-menu a:hover {
+    transform: translateY(-2px);
+}
+
+.logo {
+    animation: slideInLeft 0.6s ease-out;
+    transition: transform 0.3s ease;
+}
+
+.logo:hover {
+    transform: scale(1.1);
+}
+
+/* ============================================
+   TABLE ANIMATIONS
+   ============================================ */
+
+table tbody tr {
+    animation: fadeInUp 0.4s ease-out both;
+    transition: all 0.3s ease;
+}
+
+table tbody tr:nth-child(1) { animation-delay: 0.05s; }
+table tbody tr:nth-child(2) { animation-delay: 0.1s; }
+table tbody tr:nth-child(3) { animation-delay: 0.15s; }
+table tbody tr:nth-child(4) { animation-delay: 0.2s; }
+table tbody tr:nth-child(5) { animation-delay: 0.25s; }
+
+table tbody tr:hover {
+    transform: scale(1.02);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    background: #f8f9fa !important;
+}
+
+/* ============================================
+   LOADING ANIMATION
+   ============================================ */
+
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #E74C3C 0%, #C0392B 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    transition: opacity 0.5s, visibility 0.5s;
+}
+
+.loading-overlay.hidden {
+    opacity: 0;
+    visibility: hidden;
+}
+
+.loader {
+    width: 80px;
+    height: 80px;
+    border: 8px solid rgba(255, 255, 255, 0.2);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: rotate 1s linear infinite;
+}
+
+.loading-text {
+    color: white;
+    font-size: 1.5rem;
+    margin-top: 2rem;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* ============================================
+   SCROLL ANIMATIONS
+   ============================================ */
+
+.scroll-reveal {
+    opacity: 0;
+    transform: translateY(50px);
+    transition: all 0.6s ease-out;
+}
+
+.scroll-reveal.active {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* ============================================
+   ALERT ANIMATIONS
+   ============================================ */
+
+.alert {
+    animation: slideInDown 0.5s ease-out;
+}
+
+/* ============================================
+   FOOTER ANIMATION
+   ============================================ */
+
+.footer {
+    animation: fadeInUp 1s ease-out;
+}
+
+/* ============================================
+   CARTOON ANIMATIONS
+   ============================================ */
+
+.cartoon-character {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 150px;
+    height: 150px;
+    z-index: 1000;
+    animation: fadeInUp 1s ease-out 0.5s both;
+}
+
+.landlord-wave {
+    animation: wave 2s ease-in-out infinite;
+    transform-origin: bottom center;
+}
+
+.house-door {
+    animation: doorOpen 4s ease-in-out infinite;
+    transform-origin: left center;
+}
+
+.jumping-house {
+    animation: jump 2s ease-in-out infinite;
+}
+
+.keys-swing {
+    animation: swing 1.5s ease-in-out infinite;
+    transform-origin: top center;
+}
+
+.money-float {
+    animation: float 3s ease-in-out infinite;
+}
+
+.wiggle-animation {
+    animation: wiggle 1s ease-in-out infinite;
+}
+
+/* ============================================
+   TOOLTIP
+   ============================================ */
+
+[data-tooltip] {
+    position: relative;
+    cursor: pointer;
+}
+
+[data-tooltip]::before {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateY(-10px);
+    padding: 0.5rem 1rem;
+    background: #2C3E50;
+    color: white;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s ease;
+    z-index: 1000;
+}
+
+[data-tooltip]:hover::before {
+    opacity: 1;
+    transform: translateX(-50%) translateY(-5px);
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@media (max-width: 768px) {
+    .cartoon-character {
+        width: 100px;
+        height: 100px;
+        bottom: 10px;
+        right: 10px;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px) scale(1.02);
+    }
+    
+    .property-card:hover {
+        transform: translateY(-10px) scale(1.01);
+    }
+}
